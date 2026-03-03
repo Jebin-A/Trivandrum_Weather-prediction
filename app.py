@@ -2,6 +2,7 @@
 ╔══════════════════════════════════════════════════════════════════╗
 ║  🌤️  TRIVANDRUM WEATHER FORECAST — Streamlit Web App           ║
 ║  Fetches live data → runs XGBoost → shows 7-day forecast        ║
+║  v2 — Fixed: dead LSTM checkbox replaced with 7-day trend line  ║
 ╚══════════════════════════════════════════════════════════════════╝
 """
 
@@ -47,7 +48,6 @@ st.markdown("""
     --danger:    #ef4444;
     --text:      #e2e8f0;
     --muted:     #64748b;
-    --card-glow: 0 0 30px rgba(59,130,246,0.08);
 }
 
 html, body, [class*="css"] {
@@ -59,7 +59,6 @@ html, body, [class*="css"] {
 .main { background: var(--bg); }
 .block-container { padding: 2rem 2.5rem; max-width: 1400px; }
 
-/* Header */
 .hero {
     background: linear-gradient(135deg, #0f1f3d 0%, #0b1628 50%, #0d1f35 100%);
     border: 1px solid var(--border);
@@ -72,47 +71,27 @@ html, body, [class*="css"] {
 .hero::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 400px;
-    height: 400px;
+    top: -50%; right: -10%;
+    width: 400px; height: 400px;
     background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
     pointer-events: none;
 }
 .hero-title {
     font-family: 'Space Mono', monospace;
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 0;
-    line-height: 1.2;
+    font-size: 2.2rem; font-weight: 700;
+    color: #fff; margin: 0; line-height: 1.2;
 }
-.hero-sub {
-    color: var(--muted);
-    font-size: 0.95rem;
-    margin-top: 0.5rem;
-    font-weight: 300;
-}
+.hero-sub { color: var(--muted); font-size: 0.95rem; margin-top: 0.5rem; font-weight: 300; }
 .hero-badge {
     display: inline-block;
     background: rgba(59,130,246,0.15);
     border: 1px solid rgba(59,130,246,0.3);
-    color: #93c5fd;
-    font-size: 0.72rem;
+    color: #93c5fd; font-size: 0.72rem;
     font-family: 'Space Mono', monospace;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-top: 0.75rem;
-    margin-right: 6px;
+    padding: 3px 10px; border-radius: 20px;
+    margin-top: 0.75rem; margin-right: 6px;
 }
 
-/* Metric cards */
-.metric-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 12px;
-    margin: 1.5rem 0;
-}
 .metric-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -125,84 +104,57 @@ html, body, [class*="css"] {
 .metric-icon { font-size: 1.6rem; margin-bottom: 0.3rem; }
 .metric-value {
     font-family: 'Space Mono', monospace;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #fff;
+    font-size: 1.4rem; font-weight: 700; color: #fff;
 }
 .metric-label {
-    font-size: 0.72rem;
-    color: var(--muted);
-    margin-top: 0.2rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: 0.72rem; color: var(--muted);
+    margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.05em;
 }
 
-/* Forecast row cards */
 .forecast-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
-    margin: 1rem 0;
+    gap: 10px; margin: 1rem 0;
 }
 .fc-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 1rem 0.75rem;
-    text-align: center;
+    padding: 1rem 0.75rem; text-align: center;
 }
 .fc-card.today { border-color: var(--accent); background: rgba(59,130,246,0.07); }
 .fc-day {
-    font-size: 0.7rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font-size: 0.7rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
     font-family: 'Space Mono', monospace;
 }
 .fc-date { font-size: 0.8rem; color: var(--text); margin: 2px 0 6px; }
 .fc-icon { font-size: 1.8rem; margin: 4px 0; }
 .fc-temp-max {
     font-family: 'Space Mono', monospace;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #fca5a5;
+    font-size: 1.1rem; font-weight: 700; color: #fca5a5;
 }
 .fc-temp-min {
     font-family: 'Space Mono', monospace;
-    font-size: 0.85rem;
-    color: #93c5fd;
-    margin-top: 1px;
+    font-size: 0.85rem; color: #93c5fd; margin-top: 1px;
 }
 .fc-rain { font-size: 0.72rem; color: #6ee7b7; margin-top: 4px; }
-.fc-hum  { font-size: 0.7rem;  color: var(--muted); margin-top: 2px; }
+.fc-hum  { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
 
-/* Section headers */
 .section-header {
     font-family: 'Space Mono', monospace;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--muted);
+    font-size: 0.8rem; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--muted);
     border-bottom: 1px solid var(--border);
-    padding-bottom: 0.6rem;
-    margin: 2rem 0 1.2rem;
+    padding-bottom: 0.6rem; margin: 2rem 0 1.2rem;
 }
 
-/* Performance table */
-.perf-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.88rem;
-}
+.perf-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .perf-table th {
-    background: var(--surface2);
-    padding: 0.6rem 1rem;
-    text-align: left;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
+    background: var(--surface2); padding: 0.6rem 1rem;
+    text-align: left; font-family: 'Space Mono', monospace;
+    font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted);
     border-bottom: 1px solid var(--border);
 }
 .perf-table td {
@@ -214,44 +166,19 @@ html, body, [class*="css"] {
 .grade-a  { color: #34d399; font-weight: 600; font-family: 'Space Mono', monospace; }
 .grade-b  { color: #fbbf24; font-weight: 600; font-family: 'Space Mono', monospace; }
 
-/* Status pill */
-.pill {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-family: 'Space Mono', monospace;
-}
-.pill-green { background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
-.pill-blue  { background: rgba(59,130,246,0.15);  color: #93c5fd;  border: 1px solid rgba(59,130,246,0.3); }
-.pill-amber { background: rgba(251,191,36,0.15);  color: #fbbf24;  border: 1px solid rgba(251,191,36,0.3); }
-
-/* Sidebar */
 section[data-testid="stSidebar"] {
     background: var(--surface);
     border-right: 1px solid var(--border);
 }
 section[data-testid="stSidebar"] .block-container { padding: 1.5rem 1rem; }
 
-/* Streamlit overrides */
 .stButton > button {
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    padding: 0.6rem 1.5rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.8rem;
-    width: 100%;
-    transition: opacity 0.2s;
+    background: var(--accent); color: white; border: none;
+    border-radius: 10px; padding: 0.6rem 1.5rem;
+    font-family: 'Space Mono', monospace; font-size: 0.8rem;
+    width: 100%; transition: opacity 0.2s;
 }
 .stButton > button:hover { opacity: 0.85; }
-div[data-testid="stMetric"] {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1rem;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -259,23 +186,21 @@ div[data-testid="stMetric"] {
 # ════════════════════════════════════════════════════════════════════
 # CONSTANTS
 # ════════════════════════════════════════════════════════════════════
-CITY      = "Trivandrum"
-LATITUDE  = 8.5241
-LONGITUDE = 76.9366
-TEST_YEAR = 2025
-SEQ_LEN   = 60
+CITY          = "Trivandrum"
+LATITUDE      = 8.5241
+LONGITUDE     = 76.9366
+TEST_YEAR     = 2025
 FORECAST_DAYS = 7
 
 TARGETS = {
-    "temp_max":      {"label": "Max Temp",      "unit": "°C",   "icon": "🌡️", "clip": (24, 42)},
-    "temp_min":      {"label": "Min Temp",      "unit": "°C",   "icon": "❄️",  "clip": (18, 30)},
-    "temp_mean":     {"label": "Mean Temp",     "unit": "°C",   "icon": "🌤️", "clip": (22, 36)},
-    "precipitation": {"label": "Rainfall",      "unit": "mm",   "icon": "🌧️", "clip": (0,  300)},
-    "humidity":      {"label": "Humidity",      "unit": "%",    "icon": "💧", "clip": (40, 100)},
-    "windspeed":     {"label": "Wind Speed",    "unit": "km/h", "icon": "💨", "clip": (0,   80)},
+    "temp_max":      {"label": "Max Temp",   "unit": "°C",   "icon": "🌡️", "clip": (24, 42)},
+    "temp_min":      {"label": "Min Temp",   "unit": "°C",   "icon": "❄️",  "clip": (18, 30)},
+    "temp_mean":     {"label": "Mean Temp",  "unit": "°C",   "icon": "🌤️", "clip": (22, 36)},
+    "precipitation": {"label": "Rainfall",   "unit": "mm",   "icon": "🌧️", "clip": (0,  300)},
+    "humidity":      {"label": "Humidity",   "unit": "%",    "icon": "💧", "clip": (40, 100)},
+    "windspeed":     {"label": "Wind Speed", "unit": "km/h", "icon": "💨", "clip": (0,   80)},
 }
 TARGET_COLS = list(TARGETS.keys())
-N_TARGETS   = len(TARGET_COLS)
 
 RAW_COLS = ["temp_max","temp_min","temp_mean","precipitation",
             "windspeed","windgusts","humidity","solar_radiation"]
@@ -299,7 +224,7 @@ plt.rcParams.update({
 # DATA & MODEL FUNCTIONS
 # ════════════════════════════════════════════════════════════════════
 
-@st.cache_data(ttl=3600)   # cache 1 hour
+@st.cache_data(ttl=3600)
 def fetch_weather(lat, lon, start, end):
     url = "https://archive-api.open-meteo.com/v1/archive"
     params = {
@@ -355,14 +280,24 @@ def engineer_features(df):
 
 
 @st.cache_resource
-def train_models(df_raw, df_raw_ext):
-    """Train all 6 XGBoost models. Cached so it only runs once."""
+def train_models(df_raw_hash, train_start_year):
+    """Train all 6 XGBoost models. Cached so it only runs once per config."""
+    df_raw     = fetch_weather(LATITUDE, LONGITUDE, "2023-01-01",
+                               datetime.today().strftime("%Y-%m-%d"))
+    df_raw_ext = fetch_weather(LATITUDE, LONGITUDE,
+                               f"{train_start_year}-01-01",
+                               datetime.today().strftime("%Y-%m-%d"))
+
     df     = engineer_features(df_raw)
     df_ext = engineer_features(df_raw_ext)
 
-    feature_cols = [c for c in df.columns if c not in TARGET_COLS]
-    train     = df[df.index.year < TEST_YEAR]
-    test      = df[df.index.year == TEST_YEAR]
+    feature_cols = [c for c in df_ext.columns if c not in TARGET_COLS]
+    train = df_ext[df_ext.index.year <  TEST_YEAR]
+    test  = df[df.index.year == TEST_YEAR]
+
+    # Align columns — test may have fewer rows so use train's feature set
+    test_feat = engineer_features(df_raw)
+    test_feat = test_feat[test_feat.index.year == TEST_YEAR]
 
     models  = {}
     metrics = {}
@@ -377,15 +312,17 @@ def train_models(df_raw, df_raw_ext):
         )
         model.fit(
             train[feature_cols], train[t],
-            eval_set=[(test[feature_cols], test[t])],
+            eval_set=[(test_feat[feature_cols], test_feat[t])],
             verbose=False
         )
-        pred = np.clip(model.predict(test[feature_cols]),
-                       TARGETS[t]["clip"][0], TARGETS[t]["clip"][1])
+        pred = np.clip(
+            model.predict(test_feat[feature_cols]),
+            TARGETS[t]["clip"][0], TARGETS[t]["clip"][1]
+        )
         metrics[t] = {
-            "MAE":  mean_absolute_error(test[t], pred),
-            "RMSE": np.sqrt(mean_squared_error(test[t], pred)),
-            "R2":   r2_score(test[t], pred),
+            "MAE":  mean_absolute_error(test_feat[t], pred),
+            "RMSE": np.sqrt(mean_squared_error(test_feat[t], pred)),
+            "R2":   r2_score(test_feat[t], pred),
         }
         models[t] = model
 
@@ -393,11 +330,11 @@ def train_models(df_raw, df_raw_ext):
 
 
 def make_forecast(models, feature_cols, metrics, df_raw, n_days=7):
-    history = df_raw.copy()
+    history        = df_raw.copy()
     forecast_dates = [history.index[-1] + timedelta(days=i+1) for i in range(n_days)]
-    fc = {t: [] for t in TARGET_COLS}
+    fc             = {t: [] for t in TARGET_COLS}
 
-    for step, fdate in enumerate(forecast_dates):
+    for fdate in forecast_dates:
         feat_df  = engineer_features(history)
         last_row = feat_df[feature_cols].iloc[[-1]]
         new_row  = history.iloc[[-1]].copy()
@@ -413,15 +350,12 @@ def make_forecast(models, feature_cols, metrics, df_raw, n_days=7):
             new_row[col] = history[col].tail(14).mean()
         history = pd.concat([history, new_row])
 
-    fc_df = pd.DataFrame(fc, index=forecast_dates)
-
-    # CI based on validation MAE, widening per day
+    fc_df    = pd.DataFrame(fc, index=forecast_dates)
     ci_mult  = np.array([1.0 + 0.2*i for i in range(n_days)])
     ci_lower = pd.DataFrame({t: fc_df[t].values - metrics[t]["MAE"] * ci_mult
                               for t in TARGET_COLS}, index=forecast_dates)
     ci_upper = pd.DataFrame({t: fc_df[t].values + metrics[t]["MAE"] * ci_mult
                               for t in TARGET_COLS}, index=forecast_dates)
-
     return fc_df, ci_lower, ci_upper
 
 
@@ -431,9 +365,9 @@ def get_condition(tmax, rain, hum, wind):
     elif rain > 10:  return "🌧️", "Moderate Rain"
     elif rain > 3:   return "🌦️", "Light Rain"
     elif hum  > 88:  return "🌫️", "Very Humid"
-    elif hum  > 78:  return "⛅", "Partly Cloudy"
+    elif hum  > 78:  return "⛅",  "Partly Cloudy"
     elif wind > 25:  return "💨", "Windy"
-    elif tmax > 34:  return "☀️", "Hot & Sunny"
+    elif tmax > 34:  return "☀️",  "Hot & Sunny"
     else:            return "🌤️", "Mostly Clear"
 
 
@@ -442,9 +376,9 @@ def get_condition(tmax, rain, hum, wind):
 # ════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("""
-    <div style='text-align:center; padding: 1rem 0 1.5rem;'>
+    <div style='text-align:center; padding:1rem 0 1.5rem;'>
         <div style='font-size:2.5rem;'>🌤️</div>
-        <div style='font-family: Space Mono, monospace; font-size:0.9rem;
+        <div style='font-family:Space Mono,monospace; font-size:0.9rem;
                     color:#e2e8f0; font-weight:700; margin-top:0.5rem;'>
             WEATHER FORECAST
         </div>
@@ -455,62 +389,80 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.markdown("**📍 Location**")
-    st.markdown(f"""
+    st.markdown("""
     <div style='background:#1a2236; border:1px solid #1e2d45; border-radius:10px;
                 padding:0.8rem 1rem; font-size:0.85rem; color:#94a3b8; margin-bottom:1rem;'>
         Trivandrum (Thiruvananthapuram)<br>
         <span style='font-family:Space Mono,monospace; font-size:0.75rem; color:#64748b;'>
-            8.5241°N  76.9366°E
+            8.5241°N &nbsp; 76.9366°E
         </span>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("**⚙️ Settings**")
+
     forecast_days = st.slider("Forecast days", 3, 7, 7)
-    train_start   = st.selectbox("Training data from", ["2020", "2021", "2022", "2023"], index=0)
-    show_lstm_ref = st.checkbox("Show LSTM reference line", value=False)
-    show_ci       = st.checkbox("Show confidence intervals", value=True)
+
+    train_start = st.selectbox(
+        "Training data from",
+        ["2020", "2021", "2022", "2023"],
+        index=0,
+        help="Earlier start = more training data = better accuracy. 2020 recommended."
+    )
+
+    # ── FIXED: replaced dead LSTM checkbox with useful trend line toggle ──
+    show_trend = st.checkbox(
+        "Show 7-day trend line",
+        value=True,
+        help="Overlays a smoothed 7-day rolling average on the historical data "
+             "to show the recent trend direction before the forecast begins."
+    )
+
+    show_ci = st.checkbox(
+        "Show confidence intervals",
+        value=True,
+        help="Shaded ribbon around forecast. Widens each day: "
+             "±1×MAE on Day 1, up to ±2.2×MAE on Day 7."
+    )
 
     st.markdown("---")
-    run_btn = st.button("🔄  Refresh Forecast")
+    st.button("🔄  Refresh Forecast")
 
     st.markdown("---")
     st.markdown("""
-    <div style='font-size:0.72rem; color:#475569; line-height:1.6;'>
-        <b style='color:#64748b;'>Model</b><br>
-        XGBoost Regressor × 6<br><br>
-        <b style='color:#64748b;'>Data</b><br>
-        Open-Meteo Archive API<br><br>
-        <b style='color:#64748b;'>Validated on</b><br>
-        2025 held-out data<br><br>
-        <b style='color:#64748b;'>Best R²</b><br>
-        Mean Temp = 0.977
+    <div style='font-size:0.72rem; color:#475569; line-height:1.8;'>
+        <b style='color:#64748b;'>Model</b><br>XGBoost Regressor × 6<br><br>
+        <b style='color:#64748b;'>Data</b><br>Open-Meteo Archive API<br><br>
+        <b style='color:#64748b;'>Validated on</b><br>2025 held-out data<br><br>
+        <b style='color:#64748b;'>Best R²</b><br>Mean Temp = 0.977
     </div>
     """, unsafe_allow_html=True)
 
 
 # ════════════════════════════════════════════════════════════════════
-# MAIN — LOAD DATA & TRAIN
+# LOAD DATA & TRAIN
 # ════════════════════════════════════════════════════════════════════
 today_str = datetime.today().strftime("%Y-%m-%d")
 
 with st.spinner("📡 Fetching weather data from Open-Meteo..."):
     try:
-        df_raw     = fetch_weather(LATITUDE, LONGITUDE, "2023-01-01", today_str)
-        df_raw_ext = fetch_weather(LATITUDE, LONGITUDE, f"{train_start}-01-01", today_str)
+        df_raw = fetch_weather(LATITUDE, LONGITUDE, "2023-01-01", today_str)
     except Exception as e:
         st.error(f"❌ Could not fetch data: {e}")
         st.stop()
 
 with st.spinner("🤖 Training XGBoost models..."):
-    models, val_metrics, feature_cols = train_models(df_raw, df_raw_ext)
+    # Pass train_start as part of cache key so changing it re-trains
+    models, val_metrics, feature_cols = train_models(
+        df_raw.index[-1].strftime("%Y%m%d") + train_start,
+        train_start
+    )
 
 with st.spinner("🔮 Generating forecast..."):
     fc_df, ci_lower, ci_upper = make_forecast(
         models, feature_cols, val_metrics, df_raw, forecast_days
     )
 
-# Latest observed values (last available day)
 latest = df_raw.iloc[-1]
 
 
@@ -524,7 +476,8 @@ latest_icon, latest_cond = get_condition(
 
 st.markdown(f"""
 <div class="hero">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
+    <div style="display:flex; justify-content:space-between;
+                align-items:flex-start; flex-wrap:wrap; gap:1rem;">
         <div>
             <div class="hero-title">{latest_icon} {CITY}</div>
             <div class="hero-sub">
@@ -545,7 +498,7 @@ st.markdown(f"""
                 {latest['temp_max']:.1f}°C
             </div>
             <div style="color:#64748b; font-size:0.85rem; margin-top:0.2rem;">
-                Max · {latest['temp_min']:.1f}°C Min
+                Max &nbsp;·&nbsp; {latest['temp_min']:.1f}°C Min
             </div>
         </div>
     </div>
@@ -554,19 +507,19 @@ st.markdown(f"""
 
 
 # ════════════════════════════════════════════════════════════════════
-# TODAY'S STATS — 6 METRIC CARDS
+# LATEST CONDITIONS — 6 METRIC CARDS
 # ════════════════════════════════════════════════════════════════════
 st.markdown('<div class="section-header">📊 Latest Observed Conditions</div>',
             unsafe_allow_html=True)
 
 cols = st.columns(6)
 stats = [
-    ("🌡️", f"{latest['temp_max']:.1f}°C", "Max Temp"),
-    ("❄️",  f"{latest['temp_min']:.1f}°C", "Min Temp"),
-    ("🌤️", f"{latest['temp_mean']:.1f}°C", "Mean Temp"),
-    ("🌧️", f"{latest['precipitation']:.1f}mm", "Rainfall"),
-    ("💧", f"{latest['humidity']:.0f}%",    "Humidity"),
-    ("💨", f"{latest['windspeed']:.1f}km/h","Wind Speed"),
+    ("🌡️", f"{latest['temp_max']:.1f}°C",    "Max Temp"),
+    ("❄️",  f"{latest['temp_min']:.1f}°C",    "Min Temp"),
+    ("🌤️", f"{latest['temp_mean']:.1f}°C",   "Mean Temp"),
+    ("🌧️", f"{latest['precipitation']:.1f}mm","Rainfall"),
+    ("💧",  f"{latest['humidity']:.0f}%",      "Humidity"),
+    ("💨",  f"{latest['windspeed']:.1f}km/h",  "Wind Speed"),
 ]
 for col, (icon, val, label) in zip(cols, stats):
     col.markdown(f"""
@@ -586,8 +539,10 @@ st.markdown('<div class="section-header">🗓️ 7-Day Forecast</div>',
 
 card_html = '<div class="forecast-grid">'
 for i, (idx, row) in enumerate(fc_df.iterrows()):
-    icon, cond = get_condition(row["temp_max"], row["precipitation"],
-                               row["humidity"], row["windspeed"])
+    icon, cond = get_condition(
+        row["temp_max"], row["precipitation"],
+        row["humidity"], row["windspeed"]
+    )
     card_html += f"""
     <div class="fc-card {'today' if i == 0 else ''}">
         <div class="fc-day">{idx.strftime('%a')}</div>
@@ -610,33 +565,52 @@ st.markdown('<div class="section-header">📈 Forecast Charts</div>',
 
 tab1, tab2, tab3 = st.tabs(["🌡️ Temperature", "🌧️ Rainfall & Humidity", "💨 Wind Speed"])
 
-# Helper: recent history + forecast overlay
-def make_chart(targets_to_plot, tab, n_recent=21):
-    fig, axes = plt.subplots(len(targets_to_plot), 1,
-                             figsize=(12, 3.5 * len(targets_to_plot)),
-                             sharex=False)
+def make_chart(targets_to_plot, n_recent=21):
+    fig, axes = plt.subplots(
+        len(targets_to_plot), 1,
+        figsize=(12, 3.8 * len(targets_to_plot)),
+        sharex=False
+    )
     if len(targets_to_plot) == 1:
         axes = [axes]
 
     for ax, t in zip(axes, targets_to_plot):
-        info  = TARGETS[t]
-        hist  = df_raw[t].iloc[-n_recent:]
+        info = TARGETS[t]
+        hist = df_raw[t].iloc[-n_recent:]
 
+        # Historical line
         ax.plot(hist.index, hist.values, color="#4f9cf9",
                 lw=2, label="Historical", zorder=4)
-        ax.axvline(fc_df.index[0], color="#fff", lw=0.8, ls="--", alpha=0.25)
 
+        # 7-day trend line on historical (FIXED — was dead LSTM checkbox)
+        if show_trend:
+            trend = hist.rolling(7, min_periods=1).mean()
+            ax.plot(trend.index, trend.values, color="#ffffff",
+                    lw=1.2, ls="--", alpha=0.45, label="7-day trend", zorder=3)
+
+        # Vertical divider between history and forecast
+        ax.axvline(fc_df.index[0], color="#fff", lw=0.8, ls="--", alpha=0.2)
+
+        # Confidence interval ribbon
         if show_ci:
-            ax.fill_between(fc_df.index, ci_lower[t], ci_upper[t],
-                            color=COLORS[t], alpha=0.18, label="Confidence Interval")
+            ax.fill_between(
+                fc_df.index, ci_lower[t], ci_upper[t],
+                color=COLORS[t], alpha=0.18, label="Confidence Interval"
+            )
 
+        # XGBoost forecast line
         ax.plot(fc_df.index, fc_df[t], color=COLORS[t], lw=2.5,
                 marker="o", ms=6, label="XGBoost Forecast", zorder=5)
 
+        # Value labels on forecast points
         for idx, val in fc_df[t].items():
-            ax.annotate(f"{val:.1f}", xy=(idx, val), xytext=(0, 10),
-                        textcoords="offset points", ha="center",
-                        fontsize=8, color=COLORS[t], fontweight="bold")
+            ax.annotate(
+                f"{val:.1f}",
+                xy=(idx, val), xytext=(0, 10),
+                textcoords="offset points",
+                ha="center", fontsize=8,
+                color=COLORS[t], fontweight="bold"
+            )
 
         ax.set_title(f"{info['icon']} {info['label']} ({info['unit']})",
                      fontsize=10, color=COLORS[t], pad=8)
@@ -651,17 +625,17 @@ def make_chart(targets_to_plot, tab, n_recent=21):
     return fig
 
 with tab1:
-    fig1 = make_chart(["temp_max","temp_min","temp_mean"], tab1)
+    fig1 = make_chart(["temp_max","temp_min","temp_mean"])
     st.pyplot(fig1, use_container_width=True)
     plt.close(fig1)
 
 with tab2:
-    fig2 = make_chart(["precipitation","humidity"], tab2)
+    fig2 = make_chart(["precipitation","humidity"])
     st.pyplot(fig2, use_container_width=True)
     plt.close(fig2)
 
 with tab3:
-    fig3 = make_chart(["windspeed"], tab3)
+    fig3 = make_chart(["windspeed"])
     st.pyplot(fig3, use_container_width=True)
     plt.close(fig3)
 
@@ -673,22 +647,30 @@ st.markdown('<div class="section-header">🗺️ Forecast Heatmap</div>',
             unsafe_allow_html=True)
 
 day_labels = [d.strftime("%a %b %d") for d in fc_df.index]
-cmaps = {"temp_max":"RdYlBu_r","temp_min":"coolwarm","temp_mean":"coolwarm",
-         "precipitation":"Blues","humidity":"PuBu","windspeed":"YlOrRd"}
+cmaps = {
+    "temp_max": "RdYlBu_r", "temp_min": "coolwarm",
+    "temp_mean": "coolwarm", "precipitation": "Blues",
+    "humidity": "PuBu",     "windspeed": "YlOrRd",
+}
 
 fig_hm, axes_hm = plt.subplots(6, 1, figsize=(12, 18))
 for i, t in enumerate(TARGET_COLS):
-    data = pd.DataFrame({"Forecast": fc_df[t].values},
-                        index=day_labels).T
-    sns.heatmap(data, ax=axes_hm[i], cmap=cmaps[t],
-                annot=True, fmt=".1f",
-                annot_kws={"size": 11, "weight": "bold"},
-                linewidths=2, linecolor="#0b0f1a",
-                cbar_kws={"label": TARGETS[t]["unit"], "shrink": 0.6})
+    data = pd.DataFrame(
+        {"Forecast": fc_df[t].values}, index=day_labels
+    ).T
+    sns.heatmap(
+        data, ax=axes_hm[i], cmap=cmaps[t],
+        annot=True, fmt=".1f",
+        annot_kws={"size": 11, "weight": "bold"},
+        linewidths=2, linecolor="#0b0f1a",
+        cbar_kws={"label": TARGETS[t]["unit"], "shrink": 0.6}
+    )
     axes_hm[i].set_title(
         f"{TARGETS[t]['icon']}  {TARGETS[t]['label']} ({TARGETS[t]['unit']})",
-        color=COLORS[t], fontsize=11)
-    axes_hm[i].set_xlabel(""); axes_hm[i].tick_params(labelsize=9)
+        color=COLORS[t], fontsize=11
+    )
+    axes_hm[i].set_xlabel("")
+    axes_hm[i].tick_params(labelsize=9)
 plt.tight_layout()
 st.pyplot(fig_hm, use_container_width=True)
 plt.close(fig_hm)
@@ -702,17 +684,17 @@ st.markdown('<div class="section-header">📐 Model Performance (2025 Validation
 
 rows = ""
 for t in TARGET_COLS:
-    m  = val_metrics[t]
-    r2 = m["R2"]
+    m     = val_metrics[t]
+    r2    = m["R2"]
     grade = "A+" if r2 >= 0.93 else "A" if r2 >= 0.80 else "B+" if r2 >= 0.65 else "B"
-    grade_cls = "grade-a" if r2 >= 0.80 else "grade-b"
+    gcls  = "grade-a" if r2 >= 0.80 else "grade-b"
     rows += f"""
     <tr>
         <td>{TARGETS[t]['icon']} {TARGETS[t]['label']}</td>
         <td style='font-family:Space Mono,monospace;'>{m['MAE']:.3f} {TARGETS[t]['unit']}</td>
         <td style='font-family:Space Mono,monospace;'>{m['RMSE']:.3f} {TARGETS[t]['unit']}</td>
         <td style='font-family:Space Mono,monospace;'>{r2:.3f}</td>
-        <td><span class='{grade_cls}'>{grade}</span></td>
+        <td><span class='{gcls}'>{grade}</span></td>
     </tr>"""
 
 st.markdown(f"""
@@ -733,7 +715,6 @@ st.markdown(f"""
 st.markdown('<div class="section-header">💾 Download Forecast</div>',
             unsafe_allow_html=True)
 
-# Build combined CSV
 combined = fc_df.copy()
 combined.columns = [f"{c}_forecast" for c in combined.columns]
 for t in TARGET_COLS:
@@ -742,7 +723,9 @@ for t in TARGET_COLS:
 combined.index.name = "date"
 csv_data = combined.reset_index().to_csv(index=False)
 
-col1, col2, col3 = st.columns([1,1,2])
+hist_csv = df_raw[TARGET_COLS].tail(90).reset_index().to_csv(index=False)
+
+col1, col2, col3 = st.columns([1, 1, 2])
 with col1:
     st.download_button(
         label="⬇️  Download Forecast CSV",
@@ -751,23 +734,22 @@ with col1:
         mime="text/csv",
     )
 with col2:
-    hist_csv = df_raw[TARGET_COLS].tail(90).reset_index().to_csv(index=False)
     st.download_button(
         label="⬇️  Download Historical (90d)",
         data=hist_csv,
-        file_name=f"trivandrum_historical_90d.csv",
+        file_name="trivandrum_historical_90d.csv",
         mime="text/csv",
     )
 
 st.markdown("""
 <div style='margin-top:2rem; padding:1rem 1.5rem;
             background:#131929; border:1px solid #1e2d45;
-            border-radius:12px; font-size:0.8rem; color:#475569;
-            line-height:1.7;'>
+            border-radius:12px; font-size:0.8rem; color:#475569; line-height:1.7;'>
     <b style='color:#64748b;'>About this app</b><br>
     Data from <b style='color:#94a3b8;'>Open-Meteo Archive API</b> (free, no key required).
-    Models trained on 2020–2024 historical data. Validated on 2025 held-out data.
-    Forecast uses recursive XGBoost prediction with confidence intervals based on
-    actual 2025 validation error. CI widens from ±1×MAE on Day 1 to ±2.2×MAE on Day 7.
+    Models trained on historical data from the selected start year through 2024.
+    Validated on 2025 held-out data. Forecast uses recursive XGBoost prediction
+    with confidence intervals based on actual 2025 validation error —
+    widening from ±1×MAE on Day 1 to ±2.2×MAE on Day 7.
 </div>
 """, unsafe_allow_html=True)
