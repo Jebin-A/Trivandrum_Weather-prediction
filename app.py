@@ -679,35 +679,27 @@ plt.close(fig_hm)
 # ════════════════════════════════════════════════════════════════════
 # MODEL PERFORMANCE TABLE
 # ════════════════════════════════════════════════════════════════════
-st.markdown('<div class="section-header">📐 Model Performance (2025 Validation)</div>',
-            unsafe_allow_html=True)
-
 rows = ""
 for t in TARGET_COLS:
-    m     = val_metrics[t]
-    r2    = m["R2"]
-    grade = "A+" if r2 >= 0.93 else "A" if r2 >= 0.80 else "B+" if r2 >= 0.65 else "B"
-    gcls  = "grade-a" if r2 >= 0.80 else "grade-b"
+    m  = val_metrics[t]
+    r2 = m["R2"]
     rows += f"""
     <tr>
         <td>{TARGETS[t]['icon']} {TARGETS[t]['label']}</td>
         <td style='font-family:Space Mono,monospace;'>{m['MAE']:.3f} {TARGETS[t]['unit']}</td>
         <td style='font-family:Space Mono,monospace;'>{m['RMSE']:.3f} {TARGETS[t]['unit']}</td>
         <td style='font-family:Space Mono,monospace;'>{r2:.3f}</td>
-        <td><span class='{gcls}'>{grade}</span></td>
     </tr>"""
-
 st.markdown(f"""
 <table class="perf-table">
     <thead>
         <tr>
-            <th>Variable</th><th>MAE</th><th>RMSE</th><th>R²</th><th>Grade</th>
+            <th>Variable</th><th>MAE</th><th>RMSE</th><th>R²</th>
         </tr>
     </thead>
     <tbody>{rows}</tbody>
 </table>
 """, unsafe_allow_html=True)
-
 
 # ════════════════════════════════════════════════════════════════════
 # DOWNLOAD
