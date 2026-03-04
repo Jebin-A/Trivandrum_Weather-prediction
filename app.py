@@ -679,6 +679,8 @@ plt.close(fig_hm)
 # ════════════════════════════════════════════════════════════════════
 # MODEL PERFORMANCE TABLE
 # ════════════════════════════════════════════════════════════════════
+st.markdown('<div class="section-header">📐 Model Performance (2025 Validation)</div>',
+            unsafe_allow_html=True)
 rows = ""
 for t in TARGET_COLS:
     m  = val_metrics[t]
